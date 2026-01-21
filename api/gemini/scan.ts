@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { GoogleGenAI, Type } from '@google/genai';
+import { GoogleGenAI } from '@google/genai';
 
 // Handler for POST /api/gemini/scan
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -26,14 +26,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       `STRICT INSTRUCTIONS: Analyze the provided image. If it is NOT a Bingo card with a visible grid of numbers, return {"error": "not_a_bingo_card"}. If it IS a valid Bingo card, detect the exact grid size (rows and columns), then extract ALL visible numbers into a JSON object with this EXACT structure: {"rows": <number>, "cols": <number>, "grid": [[array of integers]]}. Use 0 for free spaces or empty cells. Return ONLY valid JSON, no additional text.` :
       `STRICT INSTRUCTIONS: Extract ALL numbers from this ${dimensions.rows}x${dimensions.cols} Bingo card grid. Return a JSON array of ${dimensions.rows} rows, each containing ${dimensions.cols} integers. Use 0 for free spaces or empty cells. If the image is not a valid Bingo card, return {"error": "not_a_bingo_card"}. Return ONLY valid JSON, no additional text.`;
 
+    // FIXED: Correct API structure for @google/genai package
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
-      contents: {
-        parts: [
-          { inlineData: { mimeType: 'image/jpeg', data: image } },
-          { text: prompt }
-        ]
-      },
+      contents: [
+        {
+          parts: [
+            { inlineData: { mimeType: 'image/jpeg', data: image } },
+            { text: prompt }
+          ]
+        }
+      ],
       config: {
         responseMimeType: 'application/json'
       }
